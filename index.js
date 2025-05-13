@@ -1,11 +1,11 @@
 import pLimit from "p-limit";
 import { MongoClient } from "mongodb";
 
-
-const limit = pLimit(50000);
+const limiter = Number(process.env.LIMITER) || 1000;
+const limit = pLimit(limiter);
 
 const url = process.env.MONGODB_URI
-const dbName = 'QuotationQAP';
+const dbName = process.env.MONGODB_DB_NAME;
 
 function buildLeadView(lead, quotations = [], policies = []) {
     const dataLeadView = {
@@ -24,7 +24,7 @@ function buildLeadView(lead, quotations = [], policies = []) {
             dataLeadView.quoteData.nameInsure = quoteData.nameInsure || null;
             dataLeadView.quoteData.lastNameInsure = quoteData.lastNameInsure || null;
             dataLeadView.quoteData.userInformation = quoteData.userInformation || null;
-            dataLeadView.quoteData.userBranchs = quoteData.userBranchs || null;
+            dataLeadView.quoteData.userBranchs = quoteData.userBranchs || null
 
         }
     }
@@ -44,8 +44,29 @@ function buildLeadView(lead, quotations = [], policies = []) {
     return dataLeadView;
 }
 
+async function createIndex(db) {
+    try {
+        db.collection('leads').createIndex({ agentCode: 1 });
+        db.collection('leads').createIndex({ agentCode: 1, "quoteData.userInformation.userEmail": 1 });
+        db.collection('leads').createIndex({ createdAt: -1 });
+        db.collection('leads').createIndex({ date: -1 });
+        db.collection('leads').createIndex({ date: -1, placa: 1 });
+        db.collection('leads').createIndex({ ipAddress: 1 });
+        db.collection('leads').createIndex({ placa: 1 });
+        db.collection('leads').createIndex({ quotationNumber: 1 });
+        db.collection('leads').createIndex({ quotation: 1 });
+        db.collection('leads').createIndex({ "quoteData.userBranchs.branchId": 1, date: -1 });
+        db.collection('leads').createIndex({ "quoteData.userBranchs.branchId": 1, date: -1, placa: 1 });
+        db.collection('leads').createIndex({ riskType: 1, status: 1 });
+        db.collection('leads').createIndex({ status: 1, date: -1 });
+        db.collection('leads').createIndex({ updatedAt: -1 });
+    } catch (error) {
+        throw new Error(`Error creating indexes: ${error.message}`);
+    }
+}
+
 async function conectarMongo() {
-    const client = new MongoClient(url, { useUnifiedTopology: true });
+    const client = new MongoClient(url, { monitorCommands: true });
 
     try {
         await client.connect();
@@ -59,7 +80,7 @@ async function conectarMongo() {
         // Consultamos todos los leads
         console.log('Consultando todos los leads...');
         console.time('Consulta leads');
-        const leads = await leadsCollection.find({}).toArray();
+        const leads = await leadsCollection.find({}).limit(2).toArray();
         console.timeEnd('Consulta leads');
         console.log(`fin de consulta leads`);
 
@@ -87,9 +108,15 @@ async function conectarMongo() {
         await Promise.all(tasks);
         console.timeEnd('Update leads');
         console.log('Todos los leads han sido procesados y actualizados.');
+        console.log('Iniciando creación de índices...');
+        console.time('Creación de índices');
+        await createIndex(db);
+        console.timeEnd('Creación de índices');
     } catch (error) {
         console.error('Error de conexión a MongoDB:', error);
     }
 }
+
+
 
 conectarMongo();
