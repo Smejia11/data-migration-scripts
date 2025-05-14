@@ -60,6 +60,7 @@ async function createIndex(db) {
         db.collection('leads').createIndex({ riskType: 1, status: 1 });
         db.collection('leads').createIndex({ status: 1, date: -1 });
         db.collection('leads').createIndex({ updatedAt: -1 });
+        db.collection("quotations").createIndex({ idInternal: 1 })
     } catch (error) {
         throw new Error(`Error creating indexes: ${error.message}`);
     }
@@ -80,7 +81,7 @@ async function conectarMongo() {
         // Consultamos todos los leads
         console.log('Consultando todos los leads...');
         console.time('Consulta leads');
-        const leads = await leadsCollection.find({}).limit(2).toArray();
+        const leads = await leadsCollection.find({}).toArray();
         console.timeEnd('Consulta leads');
         console.log(`fin de consulta leads`);
 
