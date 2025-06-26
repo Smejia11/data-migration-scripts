@@ -46,6 +46,7 @@ function buildLeadView(lead, quotations = [], policies = []) {
 
 async function createIndex(db) {
     try {
+        // ? leads indexes
         db.collection('leads').createIndex({ agentCode: 1 });
         db.collection('leads').createIndex({ agentCode: 1, "quoteData.userInformation.userEmail": 1 });
         db.collection('leads').createIndex({ createdAt: -1 });
@@ -60,7 +61,15 @@ async function createIndex(db) {
         db.collection('leads').createIndex({ riskType: 1, status: 1 });
         db.collection('leads').createIndex({ status: 1, date: -1 });
         db.collection('leads').createIndex({ updatedAt: -1 });
+        // ? quotations indexes
         db.collection("quotations").createIndex({ idInternal: 1 })
+        // ? policyrequests indexes
+        db.collection("policyrequests").createIndex({ "proposalData.selectedPlanPremium": 1 })
+        db.collection("policyrequests").createIndex({ "proposalData.placa": 1 })
+        db.collection("policyrequests").createIndex({ createAt: 1 })
+        db.collection("policyrequests").createIndex({ updateAt: 1 })
+        db.collection("policyrequests").createIndex({ quotation: 1 })
+
     } catch (error) {
         throw new Error(`Error creating indexes: ${error.message}`);
     }
