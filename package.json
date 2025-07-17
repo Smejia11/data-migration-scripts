@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --env-file=.env index"
+    "dev": "node --env-file=.env index",
+    "run-script": "node --env-file=.env index"
   },
   "author": "Santiago Mejia",
   "license": "ISC",

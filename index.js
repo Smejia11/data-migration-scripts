@@ -47,28 +47,40 @@ function buildLeadView(lead, quotations = [], policies = []) {
 async function createIndex(db) {
     try {
         // ? leads indexes
-        db.collection('leads').createIndex({ agentCode: 1 });
-        db.collection('leads').createIndex({ agentCode: 1, "quoteData.userInformation.userEmail": 1 });
-        db.collection('leads').createIndex({ createdAt: -1 });
-        db.collection('leads').createIndex({ date: -1 });
-        db.collection('leads').createIndex({ date: -1, placa: 1 });
-        db.collection('leads').createIndex({ ipAddress: 1 });
-        db.collection('leads').createIndex({ placa: 1 });
-        db.collection('leads').createIndex({ quotationNumber: 1 });
-        db.collection('leads').createIndex({ quotation: 1 });
-        db.collection('leads').createIndex({ "quoteData.userBranchs.branchId": 1, date: -1 });
-        db.collection('leads').createIndex({ "quoteData.userBranchs.branchId": 1, date: -1, placa: 1 });
-        db.collection('leads').createIndex({ riskType: 1, status: 1 });
-        db.collection('leads').createIndex({ status: 1, date: -1 });
-        db.collection('leads').createIndex({ updatedAt: -1 });
+        // Create all indexes for 'leads' collection in parallel
+        await Promise.all([
+            db.collection('leads').createIndex({ agentCode: 1 }),
+            db.collection('leads').createIndex({ agentCode: 1, "quoteData.userInformation.userEmail": 1 }),
+            db.collection('leads').createIndex({ createdAt: -1 }),
+            db.collection('leads').createIndex({ date: -1 }),
+            db.collection('leads').createIndex({ date: -1, placa: 1 }),
+            db.collection('leads').createIndex({ ipAddress: 1 }),
+            db.collection('leads').createIndex({ placa: 1 }),
+            db.collection('leads').createIndex({ quotationNumber: 1 }),
+            db.collection('leads').createIndex({ quotation: 1 }),
+            db.collection('leads').createIndex({ "quoteData.userBranchs.branchId": 1, date: -1 }),
+            db.collection('leads').createIndex({ "quoteData.userBranchs.branchId": 1, date: -1, placa: 1 }),
+            db.collection('leads').createIndex({ riskType: 1, status: 1 }),
+            db.collection('leads').createIndex({ status: 1, date: -1 }),
+            db.collection('leads').createIndex({ updatedAt: -1 }),
+            db.collection('leads').createIndex({ "quoteData.nameInsure": 1, date: -1 }),
+            db.collection('leads').createIndex({ "quoteData.nameInsure": 1 }),
+            db.collection('leads').createIndex({ insuranceBusinessTitle: 1 }),
+            db.collection('leads').createIndex({ insuranceBusinessTitle: 1, date: -1 }),
+            db.collection('leads').createIndex({ userEmail: 1 }),
+            db.collection('leads').createIndex({ status: 1 }),
+            db.collection('leads').createIndex({ riskType: 1 })
+        ]);
         // ? quotations indexes
-        db.collection("quotations").createIndex({ idInternal: 1 })
+        await db.collection("quotations").createIndex({ idInternal: 1 })
         // ? policyrequests indexes
-        db.collection("policyrequests").createIndex({ "proposalData.selectedPlanPremium": 1 })
-        db.collection("policyrequests").createIndex({ "proposalData.placa": 1 })
-        db.collection("policyrequests").createIndex({ createAt: 1 })
-        db.collection("policyrequests").createIndex({ updateAt: 1 })
-        db.collection("policyrequests").createIndex({ quotation: 1 })
+        await Promise.all([
+            db.collection("policyrequests").createIndex({ "proposalData.selectedPlanPremium": 1 }),
+            db.collection("policyrequests").createIndex({ "proposalData.placa": 1 }),
+            db.collection("policyrequests").createIndex({ createAt: 1 }),
+            db.collection("policyrequests").createIndex({ updateAt: 1 }),
+            db.collection("policyrequests").createIndex({ quotation: 1 })
+        ]);
 
     } catch (error) {
         throw new Error(`Error creating indexes: ${error.message}`);
@@ -90,7 +102,11 @@ async function conectarMongo() {
         // Consultamos todos los leads
         console.log('Consultando todos los leads...');
         console.time('Consulta leads');
-        const leads = await leadsCollection.find({}).toArray();
+        const leads = await leadsCollection.find({
+            proposalData: { $exists: false },
+            quoteData: { $exists: false },
+            placa: { $exists: false }
+        }).toArray();
         console.timeEnd('Consulta leads');
         console.log(`fin de consulta leads`);
 
