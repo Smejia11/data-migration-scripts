@@ -1,24 +1,34 @@
-# 🧩 Lead Updater Script
+# MongoDB Batch Update Example
 
-Este script conecta a una base de datos MongoDB, enriquece cada documento en la colección `leads` con información adicional proveniente de las colecciones `quotations` y `policyrequests`, y finalmente crea múltiples índices para optimizar las consultas futuras.
+## Overview
+This project demonstrates **batch processing** to efficiently enrich and update MongoDB documents.  
+It reads “leads” from a MongoDB database, fetches related `quotations` and `policyrequests` records, builds a consolidated `leadView` object for each document, and updates the database in parallel while respecting a configurable concurrency limit.
 
----
+## Key Features
+- **Batch Update with Concurrency Control**  
+  Uses [`p-limit`](https://www.npmjs.com/package/p-limit) to control how many asynchronous update operations run simultaneously.  
+  This prevents MongoDB and your Node.js process from being overwhelmed.
 
-## 🚀 Requisitos
+- **Lead Data Enrichment**  
+  For each lead missing `proposalData`, `quoteData`, and `placa`, the script:
+  1. Queries related `quotations` and `policyrequests`.
+  2. Combines the data into a new object using `buildLeadView`.
+  3. Updates the original lead document in the database.
 
-- Node.js >= 14
-- Acceso a una instancia de MongoDB con las siguientes colecciones:
-  - `leads`
-  - `quotations`
-  - `policyrequests`
+- **Automated Index Creation**  
+  After updates complete, indexes are created on multiple fields to optimize future queries and reporting.
 
----
+## Environment Variables
+| Variable              | Description                                      | Default |
+|-----------------------|--------------------------------------------------|---------|
+| `MONGODB_URI`         | MongoDB connection string                        | *none* |
+| `MONGODB_DB_NAME`     | Name of the database                              | *none* |
+| `LIMITER`             | Max number of concurrent update operations        | `1000` |
 
-## ⚙️ Variables de Entorno
+## Installation
+```bash
+git clone <repository-url>
+cd <project-folder>
+npm install
+node index.js
 
-Define las siguientes variables en un archivo `.env` o en tu entorno:
-
-```env
-MONGODB_URI=mongodb://usuario:contraseña@localhost:27017/nombre_basedatos
-MONGODB_DB_NAME=nombre_basedatos
-LIMITER=1000
